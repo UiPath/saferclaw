@@ -125,31 +125,40 @@ tasks:
   approve-device:
     desc: Get the list of pending approvals and approve the connection of a device to OpenClaw
     vars:
+      PID:
+        sh: |
+          vagrant ssh -c 'sudo pgrep -u openclaw openclaw | sort | head -n 1 | tr -d " \n"'
       AUTH_TOKEN:
         sh: |
           vagrant ssh -c '
-            PID=$(sudo pgrep -u openclaw openclaw | sort | head -n 1 | tr -d " \n") && \
-            sudo nsenter -a -t $PID -e env | grep OPENCLAW_GATEWAY_TOKEN | cut -d "=" -f 2 | tr -d " \n"
+            sudo nsenter -a -t {{.PID}} -e env | grep OPENCLAW_GATEWAY_TOKEN | cut -d "=" -f 2 | tr -d " \n"
           '
       DEVICES:
-        sh: vagrant ssh -c 'sudo openclaw devices list --token {{.AUTH_TOKEN}} --json | jq -r ".pending"'
+        sh: |
+          vagrant ssh -c '
+          sudo nsenter -ae -t {{.PID}} \
+            openclaw devices list --token {{.AUTH_TOKEN}} --json | jq ".pending | map({requestId, clientId, clientMode})"
+          '
     cmds:
       - echo '{{if ne .DEVICES "[]"}} Devices pending approval:{{.DEVICES}}. {{else}} No devices pending approval. {{end}}'
       - cmd: echo "Get the 'requestId' for the device you wish to approve and pass it down below"
         if: '{{ ne .DEVICES "[]" }}'
       - task: _approve_request
         if: '{{ ne .DEVICES "[]" }}'
-        vars: { AUTH_TOKEN: "{{.AUTH_TOKEN}}" }
+        vars: { AUTH_TOKEN: "{{.AUTH_TOKEN}}", PID: "{{.PID}}" }
         interactive: true
     silent: true
 
   _approve_request:
     desc: Approves the connection of a device to openclaw
     requires:
-      vars: [AUTH_TOKEN, REQUEST_ID]
+      vars: [PID, AUTH_TOKEN, requestId]
     internal: true
     cmds:
-      - vagrant ssh -c "openclaw devices approve --token {{.AUTH_TOKEN}} {{.REQUEST_ID}}"
+      - cmd: |
+          vagrant ssh -c '
+            sudo nsenter -ae -t {{.PID}} openclaw devices approve --token {{.AUTH_TOKEN}} {{.requestId}}
+          '
     silent: true
 
   setup-models:
@@ -189,6 +198,7 @@ tasks:
 
   shell:
     desc: Get a terminal session to interact with the OpenClaw service using the CLI
+    silent: true
     preconditions:
       - sh: |
           {{if eq OS "windows"}}
