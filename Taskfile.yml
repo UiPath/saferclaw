@@ -140,7 +140,7 @@ tasks:
             openclaw devices list --token {{.AUTH_TOKEN}} --json | jq ".pending | map({requestId, clientId, clientMode})"
           '
     cmds:
-      - echo '{{if ne .DEVICES "[]"}} Devices pending approval:{{.DEVICES}}. {{else}} No devices pending approval. {{end}}'
+      - cmd: echo '{{if ne .DEVICES "[]"}} Devices pending approval:{{.DEVICES}}. {{else}} No devices pending approval. {{end}}'
       - cmd: echo "Get the 'requestId' for the device you wish to approve and pass it down below"
         if: '{{ ne .DEVICES "[]" }}'
       - task: _approve_request
@@ -157,7 +157,7 @@ tasks:
     cmds:
       - cmd: |
           vagrant ssh -c '
-            sudo nsenter -ae -t {{.PID}} openclaw devices approve --token {{.AUTH_TOKEN}} {{.requestId}}
+            sudo nsenter -ae -t {{.PID}} --setuid `id -u openclaw` openclaw devices approve --token {{.AUTH_TOKEN}} {{.requestId}}
           '
     silent: true
 
