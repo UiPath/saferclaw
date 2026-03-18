@@ -1,5 +1,5 @@
 # Safer claw - Quick Start
-<img width="206" height="375" alt="image" src="https://github.com/user-attachments/assets/a94ea109-dc05-4971-9246-e170c803b17e" />
+<img width="206" height="375" alt="Safer Claw logo" src="./logo.png" />
 
 **Requirements:**
 
@@ -44,4 +44,3 @@ task approve-device
 - Store tokens in plaintext config
 - Allow DMs/group chats as control channels
 - Allow messages from unapproved senders
-
