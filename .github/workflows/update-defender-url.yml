@@ -1,0 +1,77 @@
+name: Update Defender Download URL
+
+on:
+  schedule:
+    # update download URL every Monday at 6am
+    - cron: 0 6 * * 1
+  workflow_dispatch: {}
+
+jobs:
+  generate_sas:
+    name: Generate and Replace SAS URL for Defender setup script
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    environment:
+      name: main
+    steps:
+      - name: Azure Login
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          ssh-key: ${{ secrets.DEPLOY_KEY }}
+
+      - name: Generate SAS URL
+        id: sas_url
+        run: |
+          EXPIRY_DATE=$(date -u -d '+14 days' '+%Y-%m-%d')
+          SAS_URL=$(az storage blob generate-sas \
+            --account-name ${{ vars.AZURE_STORAGE_ACCOUNT }} \
+            --container-name ${{ vars.AZURE_STORAGE_CONTAINER }} \
+            --name ${{ vars.AZURE_STORAGE_ACCOUNT_BLOB }} \
+            --permissions r \
+            --expiry $EXPIRY_DATE \
+            --auth-mode login \
+            --as-user \
+            --full-uri)
+          echo "::add-mask::$SAS_URL"
+          echo "url=$SAS_URL" >> "$GITHUB_OUTPUT"
+          echo "expiry=$EXPIRY_DATE" >> "$GITHUB_OUTPUT"
+
+      - name: Update Vagrantfile with new SAS URL
+        env:
+          SAS_URL: ${{ steps.sas_url.outputs.url }}
+        run: |
+          escaped_url=$(printf '%s' "$SAS_URL" | sed 's/[&]/\\&/g')
+          sed -i "s|DEFENDER_SETUP_SCRIPT_URL = \"[^\"]*\"|DEFENDER_SETUP_SCRIPT_URL = \"$escaped_url\"|" Vagrantfile
+
+      - name: Verify SAS URL was updated in Vagrantfile
+        run: |
+          if grep -q "DEFENDER_SETUP_SCRIPT_URL = \"https://" Vagrantfile; then
+            echo "✓ Vagrantfile updated successfully with SAS URL"
+          else
+            echo "✗ ERROR: SAS URL not found in Vagrantfile"
+            exit 1
+          fi
+
+      - name: Configure git user
+        run: |
+          git config --local user.email "github-actions@github.com"
+          git config --local user.name "github-actions[bot]"
+
+      - name: Commit and push changes
+        run: |
+          if git diff --quiet; then
+            echo "No changes to commit"
+          else
+            git add Vagrantfile
+            git commit -m "chore: update Defender setup SAS to expire at ${{ steps.sas_url.outputs.expiry }}"
+            git push origin main
+          fi
