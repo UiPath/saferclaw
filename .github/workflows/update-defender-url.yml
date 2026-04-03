@@ -30,7 +30,7 @@ jobs:
       - name: Generate SAS URL
         id: sas_url
         run: |
-          EXPIRY_DATE=$(date -u -d '+8 days' '+%Y-%m-%d')
+          EXPIRY_DATE=$(date -u -d '+14 days' '+%Y-%m-%d')
           SAS_URL=$(az storage blob generate-sas \
             --account-name ${{ vars.AZURE_STORAGE_ACCOUNT }} \
             --container-name ${{ vars.AZURE_STORAGE_CONTAINER }} \
