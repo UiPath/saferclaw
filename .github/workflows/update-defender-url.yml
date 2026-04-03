@@ -4,6 +4,7 @@ on:
   schedule:
     # update download URL every Monday at 6am
     - cron: 0 6 * * 1
+  workflow_dispatch: {}
 
 jobs:
   generate_sas:
@@ -48,7 +49,7 @@ jobs:
         env:
           SAS_URL: ${{ steps.sas_url.outputs.url }}
         run: |
-          escaped_url=$(printf '%s\n' "$SAS_URL" | sed 's/[&]/\\&/g')
+          escaped_url=$(printf '%s' "$SAS_URL" | sed 's/[&]/\\&/g')
           sed -i "s|DEFENDER_SETUP_SCRIPT_URL = \"[^\"]*\"|DEFENDER_SETUP_SCRIPT_URL = \"$escaped_url\"|" Vagrantfile
 
       - name: Verify SAS URL was updated in Vagrantfile
