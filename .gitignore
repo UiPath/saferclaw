@@ -7,3 +7,4 @@ openclaw-upstream/
 *.log
 .serena/
 .DS_Store
+.worktrees/
