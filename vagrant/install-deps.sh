@@ -3,6 +3,8 @@
 set -euo pipefail
 
 : "${AZURE_SUBSCRIPTION_ID:?AZURE_SUBSCRIPTION_ID must be set}"
+: "${DEFENDER_SETUP_SCRIPT_URL:?DEFENDER_SETUP_SCRIPT_URL must be set}"
+
 # Fix some weird hash mismatches happening on `apt update`, only on ARM devices,
 # by disabling HTTP pipelining, caching and intermediate proxies.
 echo "Acquire::http::Pipeline-Depth 0;" > /etc/apt/apt.conf.d/99custom && \
@@ -22,7 +24,7 @@ echo "=== Installing Microsoft Defender ==="
 curl -sL https://aka.ms/InstallAzureCLIDeb | bash
 wget https://raw.githubusercontent.com/microsoft/mdatp-xplat/master/linux/installation/mde_installer.sh \
     -O ~/mde_installer.sh
-wget 'https://dfescripts.blob.core.windows.net/dfelinuxscript/MicrosoftDefenderATPOnboardingLinuxServer.py?sp=r&st=2023-03-16T10:58:06Z&se=2026-04-01T17:58:06Z&spr=https&sv=2021-12-02&sr=b&sig=NIflnJXmjU%2Fl2h7UNBJddDuFaf67TzG0Wxl7H%2BnLjN8%3D' \
+wget "$DEFENDER_SETUP_SCRIPT_URL" \
     -O ~/MicrosoftDefenderATPOnboardingLinuxServer.py
 chmod +x ~/mde_installer.sh
 ~/mde_installer.sh \

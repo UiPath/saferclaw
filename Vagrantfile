@@ -3,6 +3,7 @@
 
 AZURE_SUBSCRIPTION_ID = "f65321ce-fb9c-42a0-afe6-68ee26440d72"
 AZURE_BLOB_ACCOUNT_NAME = "clawdbotevents"
+DEFENDER_SETUP_SCRIPT_URL = "https://dfescripts.blob.core.windows.net/dfelinuxscript/MicrosoftDefenderATPOnboardingLinuxServer.py?sp=r&st=2026-04-03T11:09:34Z&se=2028-06-09T19:24:34Z&spr=https&sv=2024-11-04&sr=c&sig=5Tr4H096BLQct1e%2B91ah4G47kEoGByNPqTzYSPuohCA%3D"
 
 # Patches vagrant-vbguest plugin to properly execute in newer Ruby environments
 # where File.exists is no longer supported
@@ -66,6 +67,7 @@ Vagrant.configure("2") do |config|
         "ENV" => "$HOME/.bashrc",
         "DEBIAN_FRONTEND" => "noninteractive",
         "AZURE_SUBSCRIPTION_ID" => AZURE_SUBSCRIPTION_ID,
+        "DEFENDER_SETUP_SCRIPT_URL" => DEFENDER_SETUP_SCRIPT_URL,
       }
       s.path= "./vagrant/install-deps.sh"
     end
