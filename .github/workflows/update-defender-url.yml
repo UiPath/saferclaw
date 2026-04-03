@@ -24,7 +24,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          ref: fix/update-defender-download-url
+          ref: main
           ssh-key: ${{ secrets.DEPLOY_KEY }}
 
       - name: Generate SAS URL
@@ -72,5 +72,5 @@ jobs:
           else
             git add Vagrantfile
             git commit -m "chore: update Defender setup SAS to expire at ${{ steps.sas_url.outputs.expiry }}"
-            git push origin fix/update-defender-download-url
+            git push origin main
           fi
